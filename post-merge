@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# composer change
+COMPOSER_CHANGE=`git diff HEAD@{1} --stat -- composer.lock | wc -l`
+if [ $COMPOSER_CHANGE -gt 0 ];
+then
+    echo "composer.lock has changed!"
+    echo "run composer install --dev"
+fi
+
+# migration change
+MIGRATION_CHANGE=`git diff HEAD@{1} --stat -- database/migrations | wc -l`
+if [ $MIGRATION_CHANGE -gt 0 ];
+then
+    echo "New migrations"
+    echo "run php artisan migrate"
+fi
