@@ -1,0 +1,49 @@
+#!/bin/bash
+
+git diff --cached --name-only | while read FILE; do
+
+if [[ "$FILE" =~ ^.+(php|inc|module|install|test)$ ]]; then
+    # check for php syntax errors
+    if [[ -f $FILE ]]; then
+        php -l "$FILE" 1> /dev/null
+        if [ $? -ne 0 ]; then
+            echo -e "\e[1;31m\tAborting commit due to files with syntax errors.\e[0m" >&2
+            exit 1
+        fi
+    fi
+
+    # Run Your Unit Tests
+    $(pwd)/vendor/phpunit/phpunit/phpunit 1> /dev/null
+    if [ $? -ne 0 ]; then
+      echo -e "\e[1;31m\tUnit tests failed ! Aborting commit.\e[0m" >&2
+      exit 1;
+    fi
+
+
+
+    # Code contains test code such as console.log or dd
+    RESULT=$(grep "dd(" "$FILE")
+    if [ ! -z $RESULT ]; then
+      echo -e "\e[1;33m\tWarning, the commit contains a call to dd(). Commit was not aborted, however.\e[0m" >&2
+    fi
+
+    RESULT=$(grep "console.log(" "$FILE")
+    if [ ! -z $RESULT ]; then
+      echo -e "\e[1;33m\tWarning, the commit contains a call to console.log(). Commit was not aborted, however.\e[0m" >&2
+    fi
+
+    RESULT=$(grep "die(" "$FILE")
+    if [ ! -z $RESULT ]; then
+      echo -e "\e[1;33m\tWarning, the commit contains a call to die(). Commit was not aborted, however.\e[0m" >&2
+    fi
+
+    RESULT=$(grep "var_dump(" "$FILE")
+    if [ ! -z $RESULT ]; then
+      echo -e "\e[1;33m\tWarning, the commit contains a call to var_dump(). Commit was not aborted, however.\e[0m" >&2
+    fi
+
+fi
+done || exit $?
+
+
+

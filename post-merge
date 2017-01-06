@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # composer change
 COMPOSER_CHANGE=`git diff HEAD@{1} --stat -- composer.lock | wc -l`
