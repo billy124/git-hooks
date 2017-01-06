@@ -1,49 +1,52 @@
 #!/bin/bash
+RED_START='\033[31m'
+RED_END='\033[00m'
+
+YELLOW_START='\033[33m'
+YELLOW_END='\033[00m'
 
 git diff --cached --name-only | while read FILE; do
 if [[ "$FILE" =~ ^.+(php|inc|module|install|test)$ ]]; then
-    
-    # check for php syntax errors
+    # make sure the file exists
     if [[ -f $FILE ]]; then
+
+        # check for php syntax errors
         php -l "$FILE" 1> /dev/null
         if [ $? -ne 0 ]; then
-            echo -e "Aborting commit due to files with syntax errors." >&2
+            echo -e "${RED_START} - Aborting commit due to files with syntax errors. ${RED_END}" >&2
             exit 1
         fi
+
+
+        # Run Your Unit Tests
+        $(pwd)/vendor/phpunit/phpunit/phpunit 1> /dev/null
+        if [ $? -ne 0 ]; then
+          echo -e "${RED_START} - Unit tests failed ! Aborting commit. ${RED_END}" >&2
+          exit 1;
+        fi
+
+
+        # Code contains test code such as console.log or dd
+        RESULT=$(grep "dd(" "$FILE")
+        if [ ! -z $RESULT ]; then
+          echo -e "${YELLOW_START} - Warning, the commit contains a call to dd(). Commit was not aborted. ${YELLOW_END}" >&2
+        fi
+
+        RESULT=$(grep "console.log(" "$FILE")
+        if [ ! -z $RESULT ]; then
+          echo -e "${YELLOW_START} - Warning, the commit contains a call to console.log(). Commit was not aborted. ${YELLOW_END}" >&2
+        fi
+
+        RESULT=$(grep "die(" "$FILE")
+        if [ ! -z $RESULT ]; then
+          echo -e "${YELLOW_START} - Warning, the commit contains a call to die(). Commit was not aborted. ${YELLOW_END}" >&2
+        fi
+
+        RESULT=$(grep "var_dump(" "$FILE")
+        if [ ! -z $RESULT ]; then
+          echo -e "${YELLOW_START} Warning, the commit contains a call to var_dump(). Commit was not aborted. ${YELLOW_END}" >&2
+        fi
+
     fi
-
-
-    # Run Your Unit Tests
-    $(pwd)/vendor/phpunit/phpunit/phpunit 1> /dev/null
-    if [ $? -ne 0 ]; then
-      echo -e "Unit tests failed ! Aborting commit." >&2
-      exit 1;
-    fi
-
-
-    # Code contains test code such as console.log or dd
-    RESULT=$(grep "dd(" "$FILE")
-    if [ ! -z $RESULT ]; then
-      echo -e "Warning, the commit contains a call to dd(). Commit was not aborted." >&2
-    fi
-
-    RESULT=$(grep "console.log(" "$FILE")
-    if [ ! -z $RESULT ]; then
-      echo -e "Warning, the commit contains a call to console.log(). Commit was not aborted." >&2
-    fi
-
-    RESULT=$(grep "die(" "$FILE")
-    if [ ! -z $RESULT ]; then
-      echo -e "Warning, the commit contains a call to die(). Commit was not aborted." >&2
-    fi
-
-    RESULT=$(grep "var_dump(" "$FILE")
-    if [ ! -z $RESULT ]; then
-      echo -e "Warning, the commit contains a call to var_dump(). Commit was not aborted." >&2
-    fi
-
 fi
 done || exit $?
-
-
-
