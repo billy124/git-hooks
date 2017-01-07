@@ -15,3 +15,11 @@ then
     echo "New migrations"
     echo "run php artisan migrate"
 fi
+
+# seed changes
+SEED_CHANGE=`git diff HEAD@{1} --stat -- database/seeds | wc -l`
+if [ $SEED_CHANGE -gt 0 ];
+then
+    echo "New seed changes"
+    echo "run php artisan db:seed"
+fi
