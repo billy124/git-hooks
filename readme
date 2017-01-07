@@ -1,1 +1,16 @@
+##### Install #####
+1) Simply copy the files into your projects .git/hooks folder
+2) Update the pre-commit file with your path to phpunit (for laravel projects which have phpunit in vendor, you may not need to change this)
 
+##### Description #####
+Git hooks is a project ideally for laravel projects. 
+
+Current features:
+ * pre-commit 
+    - run unit tests
+    - parse changed files to make sure there are no fatal errors
+    - looks for dies()s, dd()s, and other commands which should not be committed in.
+
+ * post-merge
+    - look for new migration changes
+    - look for composer file changes
